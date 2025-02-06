@@ -1,0 +1,53 @@
+{
+  "name": "mischasigtermans/laravel-sift",
+  "description": "Extract and filter common email domains in Laravel.",
+  "keywords": ["email", "domain", "filter", "extract", "email extractor", "free email domains", "email blacklist", "domain blacklist", "Laravel"],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Mischa Sigtermans",
+      "email": "mischa@sigtermans.me"
+    }
+  ],
+  "require": {
+    "php": "^8.0",
+      "illuminate/support": "^9.0|^10.0|^11.0"
+  },
+  "require-dev": {
+    "laravel/pint": "^1.20",
+    "orchestra/testbench": "^8.31",
+    "pestphp/pest": "^2.36",
+    "pestphp/pest-plugin-laravel": "^2.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "MischaSigtermans\\Sift\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "MischaSigtermans\\Sift\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "vendor/bin/pest"
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "MischaSigtermans\\Sift\\SiftServiceProvider"
+      ],
+      "aliases": {
+        "Sift": "MischaSigtermans\\Sift\\Facades\\Sift"
+      }
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
