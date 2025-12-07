@@ -19,12 +19,14 @@ use MischaSigtermans\Sift\Facades\Sift;
 Sift::domain('user@company.com');     // 'company.com'
 Sift::domain('user@gmail.com');       // null (filtered)
 
-// Include public domains when needed
-Sift::domain('user@gmail.com', true); // 'gmail.com'
+// Check if email is business or personal
+Sift::isBusiness('user@company.com'); // true
+Sift::isBusiness('user@gmail.com');   // false
 
-// Check if a domain is a public provider
-Sift::isCommon('gmail.com');          // true
-Sift::isCommon('company.com');        // false
+// Validate in form requests
+$request->validate([
+    'email' => ['required', 'email', Sift::rule()],
+]);
 ```
 
 ## Why Sift?
@@ -45,24 +47,26 @@ When collecting emails from users, you often need to distinguish between busines
 Extract the domain portion from any email address:
 
 ```php
-Sift::domain('john.doe@example.com');  // 'example.com'
+Sift::domain('john.doe@example.com');   // 'example.com'
 Sift::domain('support@sub.domain.org'); // 'sub.domain.org'
 ```
 
 ### Smart Filtering
 
-Public email providers are filtered by default. The package includes 70+ common providers:
+Public email providers are filtered by default. The package includes 100+ common providers:
 
 ```php
 // These return null (filtered as public providers)
 Sift::domain('user@gmail.com');
 Sift::domain('user@yahoo.com');
 Sift::domain('user@outlook.com');
-Sift::domain('user@hotmail.com');
 
 // Business domains pass through
 Sift::domain('user@stripe.com');    // 'stripe.com'
 Sift::domain('user@company.io');    // 'company.io'
+
+// Include public domains when needed
+Sift::domain('user@gmail.com', true); // 'gmail.com'
 ```
 
 ### Domain Checking
@@ -73,6 +77,84 @@ Check if a domain or email belongs to a public provider:
 Sift::isCommon('gmail.com');           // true
 Sift::isCommon('user@protonmail.com'); // true
 Sift::isCommon('company.com');         // false
+
+// Or check if it's a business email
+Sift::isBusiness('user@company.com');  // true
+Sift::isBusiness('user@gmail.com');    // false
+```
+
+### Validation Rule
+
+Require business email addresses in form requests:
+
+```php
+use MischaSigtermans\Sift\Rules\BusinessEmail;
+
+// Using the rule class directly
+$request->validate([
+    'email' => ['required', 'email', new BusinessEmail],
+]);
+
+// Or via the facade helper
+$request->validate([
+    'email' => ['required', 'email', Sift::rule()],
+]);
+```
+
+Error message: "The email must be a business email address."
+
+### Batch Processing
+
+Process multiple emails at once:
+
+```php
+$emails = [
+    'john@acme.com',
+    'jane@stripe.com',
+    'bob@gmail.com',
+    'alice@acme.com',
+];
+
+// Extract unique business domains (filters personal emails)
+Sift::domains($emails);
+// ['acme.com', 'stripe.com']
+
+// Extract all unique domains without filtering
+Sift::extractAll($emails);
+// ['acme.com', 'stripe.com', 'gmail.com']
+
+// Include personal domains
+Sift::domains($emails, includeCommon: true);
+// ['acme.com', 'stripe.com', 'gmail.com']
+```
+
+### Statistics
+
+Analyze email collections:
+
+```php
+$emails = [
+    'john@acme.com',
+    'jane@acme.com',
+    'bob@stripe.com',
+    'alice@gmail.com',
+    'charlie@yahoo.com',
+];
+
+$stats = Sift::stats($emails);
+// [
+//     'total' => 5,
+//     'business' => 3,
+//     'personal' => 2,
+//     'business_rate' => 60.0,
+//     'top_domains' => [
+//         'acme.com' => 2,
+//         'stripe.com' => 1,
+//     ],
+// ]
+
+// Limit top domains returned
+$stats = Sift::stats($emails, topDomainsLimit: 5);
 ```
 
 ### Case Insensitive
@@ -80,9 +162,9 @@ Sift::isCommon('company.com');         // false
 All comparisons are case-insensitive:
 
 ```php
-Sift::domain('User@GMAIL.COM');    // null
-Sift::domain('User@Company.COM');  // 'company.com'
-Sift::isCommon('YAHOO.COM');       // true
+Sift::domain('User@GMAIL.COM');   // null
+Sift::domain('User@Company.COM'); // 'company.com'
+Sift::isCommon('YAHOO.COM');      // true
 ```
 
 ### Blade Support
@@ -90,7 +172,7 @@ Sift::isCommon('YAHOO.COM');       // true
 Use directly in Blade templates:
 
 ```blade
-@if(Sift::domain($user->email))
+@if(Sift::isBusiness($user->email))
     <span>{{ Sift::domain($user->email) }}</span>
 @else
     <span class="text-muted">Personal email</span>
@@ -99,7 +181,9 @@ Use directly in Blade templates:
 
 ## Configuration
 
-Publish the config file:
+The package includes 100+ public email providers by default. You automatically get updates when the package is updated.
+
+Publish the config file to customize:
 
 ```bash
 php artisan vendor:publish --tag=sift-config
@@ -108,38 +192,30 @@ php artisan vendor:publish --tag=sift-config
 ```php
 // config/sift.php
 return [
-    /*
-    |--------------------------------------------------------------------------
-    | Additional Domains
-    |--------------------------------------------------------------------------
-    |
-    | Add custom domains to filter alongside the built-in common domains.
-    | Useful for filtering industry-specific providers or internal domains
-    | you want to exclude from business email detection.
-    |
-    */
+    // Add extra domains to filter (on top of package defaults)
     'additional_domains' => [
-        // 'competitor.com',
-        // 'internal-tool.io',
+        'competitor.com',
+        'internal-tool.io',
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Common Domains
-    |--------------------------------------------------------------------------
-    |
-    | Pre-populated list of public email providers. Includes major providers
-    | worldwide: Gmail, Yahoo, Outlook, Hotmail, iCloud, ProtonMail, and 60+
-    | regional and temporary email services.
-    |
-    | You can modify this list to match your specific requirements.
-    |
-    */
-    'common_domains' => [
-        'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com',
-        // ... 70+ providers included
+    // Whitelist specific defaults (allow them as business emails)
+    'exclude_default_domains' => [
+        'protonmail.com', // Allow privacy-focused provider
+        'fastmail.com',
     ],
 ];
+```
+
+### View All Default Domains
+
+```php
+use MischaSigtermans\Sift\DefaultDomains;
+
+// Get the full list of 100+ default domains
+DefaultDomains::LIST;
+
+// Or get the merged list (defaults + additional - excluded)
+Sift::getCommonDomains();
 ```
 
 ## Use Cases
@@ -149,20 +225,26 @@ return [
 ```php
 public function store(Request $request)
 {
-    $request->validate(['email' => 'required|email']);
-
-    $domain = Sift::domain($request->email);
-
-    if (!$domain) {
-        return back()->withErrors([
-            'email' => 'Please use your business email address.'
-        ]);
-    }
+    $request->validate([
+        'email' => ['required', 'email', Sift::rule()],
+    ]);
 
     Lead::create([
         'email' => $request->email,
-        'company_domain' => $domain,
+        'company_domain' => Sift::domain($request->email),
     ]);
+}
+```
+
+### User Analytics Dashboard
+
+```php
+public function emailStats()
+{
+    $emails = User::pluck('email');
+
+    return Sift::stats($emails);
+    // Shows business vs personal breakdown with top company domains
 }
 ```
 
@@ -173,7 +255,6 @@ $users = User::all()->groupBy(function ($user) {
     return Sift::domain($user->email, true) ?? 'personal';
 });
 
-// Results in:
 // [
 //     'acme.com' => [...users from acme.com...],
 //     'stripe.com' => [...users from stripe.com...],
@@ -186,9 +267,8 @@ $users = User::all()->groupBy(function ($user) {
 ```php
 public function calculateDiscount(User $user): int
 {
-    // Business emails get enterprise pricing
-    if (Sift::domain($user->email)) {
-        return 20; // 20% discount
+    if (Sift::isBusiness($user->email)) {
+        return 20; // 20% enterprise discount
     }
 
     return 0;
@@ -200,6 +280,11 @@ public function calculateDiscount(User $user): int
 ```bash
 composer test
 ```
+
+## Requirements
+
+- PHP 8.2+
+- Laravel 9, 10, 11, or 12
 
 ## License
 

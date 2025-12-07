@@ -1,5 +1,5 @@
 <?php
 
-use MischaSigtermans\Sift\TestCase;
+use MischaSigtermans\Sift\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__);

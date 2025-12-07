@@ -1,26 +1,39 @@
 <?php
 
 return [
-    // Add any custom domains you want to filter out
+
+    /*
+    |--------------------------------------------------------------------------
+    | Additional Domains
+    |--------------------------------------------------------------------------
+    |
+    | Add custom domains to filter alongside the built-in defaults. These are
+    | merged with the package's 100+ default public email providers.
+    |
+    | Useful for:
+    | - Industry-specific email providers not in the default list
+    | - Internal domains you want to exclude (e.g., your own company)
+    | - Competitor domains you don't want to accept
+    |
+    */
     'additional_domains' => [
-        // 'example.org', 'testmail.com'
+        // 'example.org',
     ],
-    // Customize common domains to your liking
-    'common_domains' => [
-        'alice.it', 'aol.com', 'bigmir.net', 'bigpond.com', 'bluewin.ch', 'bk.ru', 'burnermail.io',
-        'centrum.cz', 'docomo.ne.jp', 'excite.com', 'ezweb.ne.jp', 'free.fr', 'freenet.de',
-        'fastmail.com', 'gmail.com', 'gmx.at', 'gmx.ch', 'gmx.com', 'gmx.de',
-        'gmx.net', 'guerrillamail.com', 'hotmail.co.uk', 'hotmail.com', 'hotmail.de',
-        'hotmail.es', 'hotmail.fr', 'hotmail.it', 'hushmail.com', 'icloud.com',
-        'indiatimes.com', 'inbox.ru', 'laposte.net', 'libero.it', 'list.ru',
-        'live.co.uk', 'live.com', 'live.de', 'live.es', 'live.fr', 'live.it',
-        'lycos.com', 'mail.bg', 'mail.com', 'mail.ru', 'maildrop.cc', 'mailinator.com',
-        'me.com', 'msn.com', 'orange.fr', 'outlook.com', 'protonmail.ch', 'protonmail.com',
-        'qq.com', 'rediffmail.com', 'rocketmail.com', 'seznam.cz', 'sina.com',
-        'softbank.ne.jp', 'sohu.com', 'tiscali.it', 't-online.de', 'temp-mail.org',
-        'trashmail.com', 'virgilio.it', 'web.de', 'yahoo.ca', 'yahoo.co.in', 'yahoo.co.jp',
-        'yahoo.co.uk', 'yahoo.com', 'yahoo.com.au', 'yahoo.com.sg', 'yahoo.de',
-        'yahoo.es', 'yahoo.fr', 'yahoo.it', 'yandex.com', 'yopmail.com', 'zoho.com',
-        'zoho.com.au', 'zoho.eu', 'zoho.in', '163.com', '126.com', '10minutemail.com',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Exclude Default Domains
+    |--------------------------------------------------------------------------
+    |
+    | Remove specific domains from the default filter list. Use this to allow
+    | certain public providers that you want to treat as business emails.
+    |
+    | The package includes 100+ public email providers by default (Gmail,
+    | Yahoo, Outlook, ProtonMail, etc.). Add domains here to whitelist them.
+    |
+    */
+    'exclude_default_domains' => [
+        // 'protonmail.com',
     ],
+
 ];
