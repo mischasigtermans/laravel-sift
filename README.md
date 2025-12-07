@@ -1,89 +1,206 @@
-# Sift – Simple Email Domain Extraction & Filtering
+# Laravel Sift
 
-Sift is a **Laravel package** for extracting and filtering email domains. Whether you're handling **user registrations**, **blocking public email providers**, or ensuring only **business emails** are used, **Sift** makes it simple.
+Lightweight email domain extraction and filtering for Laravel. Automatically distinguishes business emails from public providers.
 
-## Features
-- **Domain Extraction** → Extracts the domain from any email address.
-- **Smart Filtering** → Automatically detects and filters out public/free email providers.
-- **Handles Major Providers** → Includes Gmail, Yahoo, Outlook, and many more out of the box.
-- **Customizable** → Easily modify the list of common domains in the config file.
-- **Laravel-Optimized** → Designed for seamless integration with Laravel.
+Sift extracts domains from email addresses and filters out common public providers (Gmail, Yahoo, Outlook, etc.), making it easy to identify business email domains for lead qualification, analytics, or validation workflows.
 
 ## Installation
-Install Sift via Composer:
 
-```sh
+```bash
 composer require mischasigtermans/laravel-sift
 ```
 
-> **Note:** Laravel auto-discovers the package, so no manual setup is needed.
+## Quick Start
 
-To publish the config file:
-
-```sh
-php artisan vendor:publish --tag=sift-config
-```
-
-This creates `config/sift.php`, allowing customization of filtered domains.
-
-## Usage
-### **Extract an email's domain**
 ```php
-use Sift;
+use MischaSigtermans\Sift\Facades\Sift;
 
-Sift::domain('user@example.com'); // Returns 'example.com'
+// Extract business domains (filters public providers by default)
+Sift::domain('user@company.com');     // 'company.com'
+Sift::domain('user@gmail.com');       // null (filtered)
 
-// By default, public email domains are filtered:
-Sift::domain('user@gmail.com'); // Returns null
+// Include public domains when needed
+Sift::domain('user@gmail.com', true); // 'gmail.com'
 
-// Allow public domains explicitly:
-Sift::domain('user@gmail.com', true); // Returns 'gmail.com'
-
-// Business email remains unaffected:
-Sift::domain('user@company.com'); // Returns 'company.com'
+// Check if a domain is a public provider
+Sift::isCommon('gmail.com');          // true
+Sift::isCommon('company.com');        // false
 ```
 
-### **Check if a domain is common**
+## Why Sift?
+
+When collecting emails from users, you often need to distinguish between business and personal addresses. Public email providers like Gmail and Yahoo don't tell you anything about the user's company, while business domains (`user@acme.com`) identify the organization.
+
+**Common use cases:**
+
+- **Lead qualification**: Filter out personal emails to focus on business leads
+- **Domain analytics**: Group users by company domain
+- **B2B validation**: Ensure only business emails are accepted
+- **CRM enrichment**: Extract company domains for account matching
+
+## Features
+
+### Domain Extraction
+
+Extract the domain portion from any email address:
+
 ```php
-Sift::isCommon('gmail.com'); // true
-Sift::isCommon('user@company.com'); // false
-Sift::isCommon('invalid-email'); // null
+Sift::domain('john.doe@example.com');  // 'example.com'
+Sift::domain('support@sub.domain.org'); // 'sub.domain.org'
 ```
 
-### **Blade Example**
+### Smart Filtering
+
+Public email providers are filtered by default. The package includes 70+ common providers:
+
+```php
+// These return null (filtered as public providers)
+Sift::domain('user@gmail.com');
+Sift::domain('user@yahoo.com');
+Sift::domain('user@outlook.com');
+Sift::domain('user@hotmail.com');
+
+// Business domains pass through
+Sift::domain('user@stripe.com');    // 'stripe.com'
+Sift::domain('user@company.io');    // 'company.io'
+```
+
+### Domain Checking
+
+Check if a domain or email belongs to a public provider:
+
+```php
+Sift::isCommon('gmail.com');           // true
+Sift::isCommon('user@protonmail.com'); // true
+Sift::isCommon('company.com');         // false
+```
+
+### Case Insensitive
+
+All comparisons are case-insensitive:
+
+```php
+Sift::domain('User@GMAIL.COM');    // null
+Sift::domain('User@Company.COM');  // 'company.com'
+Sift::isCommon('YAHOO.COM');       // true
+```
+
+### Blade Support
+
+Use directly in Blade templates:
+
 ```blade
-{{ Sift::domain('hello@company.org') }}
+@if(Sift::domain($user->email))
+    <span>{{ Sift::domain($user->email) }}</span>
+@else
+    <span class="text-muted">Personal email</span>
+@endif
 ```
 
 ## Configuration
-Modify the common domain list in `config/sift.php` after publishing the config:
+
+Publish the config file:
+
+```bash
+php artisan vendor:publish --tag=sift-config
+```
 
 ```php
+// config/sift.php
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Additional Domains
+    |--------------------------------------------------------------------------
+    |
+    | Add custom domains to filter alongside the built-in common domains.
+    | Useful for filtering industry-specific providers or internal domains
+    | you want to exclude from business email detection.
+    |
+    */
     'additional_domains' => [
-        // 'example.org', 'testmail.com'
+        // 'competitor.com',
+        // 'internal-tool.io',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Common Domains
+    |--------------------------------------------------------------------------
+    |
+    | Pre-populated list of public email providers. Includes major providers
+    | worldwide: Gmail, Yahoo, Outlook, Hotmail, iCloud, ProtonMail, and 60+
+    | regional and temporary email services.
+    |
+    | You can modify this list to match your specific requirements.
+    |
+    */
     'common_domains' => [
-        'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com',
-        'protonmail.com', 'zoho.com', 'gmx.com', 'aol.com', 'yandex.com', 
-        'qq.com', 'live.com', 'rediffmail.com', 'mail.com', 'bigmir.net',
-        // (Full list continues...)
+        'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com',
+        // ... 70+ providers included
     ],
 ];
 ```
-View the full list of common domains in the configuration file [here](https://github.com/mischasigtermans/laravel-sift/blob/main/config/sift.php).
 
-## Running Tests
-Sift includes lightweight but effective tests using Pest. To run them:
+## Use Cases
 
-```sh
-vendor/bin/pest
+### Lead Form Validation
+
+```php
+public function store(Request $request)
+{
+    $request->validate(['email' => 'required|email']);
+
+    $domain = Sift::domain($request->email);
+
+    if (!$domain) {
+        return back()->withErrors([
+            'email' => 'Please use your business email address.'
+        ]);
+    }
+
+    Lead::create([
+        'email' => $request->email,
+        'company_domain' => $domain,
+    ]);
+}
 ```
 
-## Contributing
-Contributions are welcome. If you spot missing providers or have improvements, feel free to:
-- Open an issue on GitHub
-- Submit a pull request
+### User Grouping
+
+```php
+$users = User::all()->groupBy(function ($user) {
+    return Sift::domain($user->email, true) ?? 'personal';
+});
+
+// Results in:
+// [
+//     'acme.com' => [...users from acme.com...],
+//     'stripe.com' => [...users from stripe.com...],
+//     'personal' => [...users with gmail, yahoo, etc...],
+// ]
+```
+
+### Conditional Pricing
+
+```php
+public function calculateDiscount(User $user): int
+{
+    // Business emails get enterprise pricing
+    if (Sift::domain($user->email)) {
+        return 20; // 20% discount
+    }
+
+    return 0;
+}
+```
+
+## Testing
+
+```bash
+composer test
+```
 
 ## License
-Sift is open-source software licensed under the MIT License.
+
+MIT
