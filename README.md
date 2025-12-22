@@ -1,5 +1,8 @@
 # Laravel Sift
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/mischasigtermans/laravel-sift.svg?style=flat-square)](https://packagist.org/packages/mischasigtermans/laravel-sift)
+[![Total Downloads](https://img.shields.io/packagist/dt/mischasigtermans/laravel-sift.svg?style=flat-square)](https://packagist.org/packages/mischasigtermans/laravel-sift)
+
 Lightweight email domain extraction and filtering for Laravel. Automatically distinguishes business emails from public providers.
 
 Sift extracts domains from email addresses and filters out common public providers (Gmail, Yahoo, Outlook, etc.), making it easy to identify business email domains for lead qualification, analytics, or validation workflows.
@@ -284,7 +287,11 @@ composer test
 ## Requirements
 
 - PHP 8.2+
-- Laravel 9, 10, 11, or 12
+- Laravel 10, 11, or 12
+
+## Credits
+
+- [Mischa Sigtermans](https://github.com/mischasigtermans)
 
 ## License
 
